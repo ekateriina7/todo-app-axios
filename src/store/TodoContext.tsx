@@ -1,9 +1,9 @@
 import React, { useEffect, useReducer } from 'react';
 import { initialState, reducer } from './todoReducer';
-import { Action } from './types';
+import { Action, ActionTypes, Todo } from './types';
+import { getAll } from '../api/todos'; // Import the API function to fetch todos
 
 export const StateContext = React.createContext(initialState);
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const DispatchContext = React.createContext((_action: Action) => {});
 
 type Props = {
@@ -11,25 +11,21 @@ type Props = {
 };
 
 export const GlobalStateProvider: React.FC<Props> = ({ children }) => {
-  const [state, dispatch] = useReducer(reducer, initialState, () => {
-    const localData = localStorage.getItem('todos');
-
-    if (localData) {
-      try {
-        return { ...initialState, todos: JSON.parse(localData) };
-      } catch (e) {
-        return initialState;
-      }
-    }
-
-    return initialState;
-  });
+  const [state, dispatch] = useReducer(reducer, initialState);
 
   useEffect(() => {
-    if (state.todos) {
-      localStorage.setItem('todos', JSON.stringify(state.todos));
-    }
-  }, [state.todos]);
+    const fetchTodos = async () => {
+      try {
+        const todos = await getAll();
+        console.log(todos)
+        dispatch({ type: ActionTypes.SET_TODOS, payload: todos });
+      } catch (error) {
+        console.error('Error fetching todos:', error);
+      }
+    };
+
+    fetchTodos();
+  }, [dispatch]);
 
   return (
     <DispatchContext.Provider value={dispatch}>

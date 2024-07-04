@@ -1,27 +1,11 @@
-import React, { useContext, useEffect, useMemo } from 'react';
-import { getAll } from '../../api/todos';
-import { StateContext, DispatchContext } from '../../store/TodoContext';
-import { ActionTypes, FilterFields } from '../../store/types';
+import React, { useContext, useMemo } from 'react';
+import { StateContext } from '../../store/TodoContext';
+import { FilterFields } from '../../store/types';
 import { TodoItem } from '../TodoItem/TodoItem';
 
 export const TodoList: React.FC = () => {
   const { todos, filter } = useContext(StateContext);
   console.log(todos)
-  const dispatch = useContext(DispatchContext);
-
-  useEffect(() => {
-    const fetchTodos = async () => {
-      try {
-        const todos = await getAll();
-        dispatch({ type: ActionTypes.SET_TODOS, payload: todos });
-      } catch (error) {
-        console.error('Error fetching todos:', error);
-      }
-    };
-
-    fetchTodos();
-  }, [dispatch]);
-
   const filteredTodos = useMemo(() => {
     return todos.filter(todo => {
       switch (filter) {
@@ -41,4 +25,3 @@ export const TodoList: React.FC = () => {
     </section>
   );
 };
-

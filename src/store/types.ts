@@ -34,4 +34,4 @@ export type Action =
   | { type: ActionTypes.SET_FILTER; payload: FilterFields }
   | { type: ActionTypes.CLEAR_COMPLETED }
   | { type: ActionTypes.TOGGLE_ALL_TODOS }
-  | { type: ActionTypes.SET_TODOS; payload: Todo[] };
+  | { type: ActionTypes.SET_TODOS; payload: Todo[] };;

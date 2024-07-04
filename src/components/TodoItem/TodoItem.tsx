@@ -1,4 +1,5 @@
 import React, { useContext, useEffect, useRef, useState } from 'react';
+import { deleteTodo, updateTodo } from '../../api/todos';
 import { DispatchContext } from '../../store/TodoContext';
 import { ActionTypes, Todo } from '../../store/types';
 
@@ -11,18 +12,28 @@ export const TodoItem: React.FC<Props> = ({ todo }) => {
   const [title, setTitle] = useState(todo?.title);
 
   const dispatch = useContext(DispatchContext);
-  const onDelete = () => {
-    dispatch({ type: ActionTypes.DELETE_TODO, payload: todo.id });
+  const onDelete = async () => {
+    try {
+      await deleteTodo(todo.id);
+      dispatch({ type: ActionTypes.DELETE_TODO, payload: todo.id });
+    } catch (error) {
+      console.error('Error deleting todo:', error);
+    }
   };
 
-  const onBlur = () => {
+  const onBlur = async () => {
     if (title.trim()) {
-      dispatch({
-        type: ActionTypes.EDIT_TODO,
-        payload: { id: todo.id, title: title.trim() },
-      });
+      try {
+        //const updatedTodo = await updateTodo(todo.id, title.trim(), todo.completed);
+        // dispatch({
+        //   type: ActionTypes.EDIT_TODO,
+        //   payload: { id: updatedTodo.id, title: updatedTodo.title },
+        // });
+      } catch (error) {
+        console.error('Error updating todo:', error);
+      }
     } else {
-      dispatch({ type: ActionTypes.DELETE_TODO, payload: todo.id });
+      onDelete();
     }
 
     setEditMode(false);
