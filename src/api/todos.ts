@@ -26,3 +26,11 @@ export async function updateTodo(todoId: string, updates: Partial<Todo>): Promis
   const response = await axios.patch(`/todos/${todoId}`, updates);
   return response.data;
 }
+
+export async function deleteAllCompletedTodos(ids: string[]): Promise<void> {
+  await axios.patch('/todos?action=delete', { items: ids });
+}
+
+export async function toggleAllTodos(todos: Todo[]): Promise<void> {
+  await axios.patch('/todos?action=update', { items: todos });
+}

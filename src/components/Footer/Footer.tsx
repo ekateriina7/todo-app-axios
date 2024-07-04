@@ -1,6 +1,7 @@
 import React, { useCallback, useContext } from 'react';
 import { DispatchContext, StateContext } from '../../store/TodoContext';
 import { ActionTypes, FilterFields } from '../../store/types';
+import { deleteAllCompletedTodos } from '../../api/todos';
 
 export const Footer: React.FC = () => {
   const dispatch = useContext(DispatchContext);
@@ -14,6 +15,17 @@ export const Footer: React.FC = () => {
     },
     [dispatch],
   );
+
+  const handleClearCompleted = async () => {
+    const completedIds = completedTodos.map(todo => todo.id);
+
+    try {
+      await deleteAllCompletedTodos(completedIds);
+      dispatch({ type: ActionTypes.CLEAR_COMPLETED });
+    } catch (error) {
+      console.error('Error clearing completed todos:', error);
+    }
+  };
 
   return (
     <footer className="todoapp__footer" data-cy="Footer">
@@ -53,7 +65,7 @@ export const Footer: React.FC = () => {
         type="button"
         className="todoapp__clear-completed"
         data-cy="ClearCompletedButton"
-        onClick={() => dispatch({ type: ActionTypes.CLEAR_COMPLETED })}
+        onClick={handleClearCompleted}
         disabled={completedTodos.length === 0}
       >
         Clear completed
