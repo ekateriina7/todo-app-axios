@@ -12,6 +12,7 @@ export const TodoItem: React.FC<Props> = ({ todo }) => {
   const [title, setTitle] = useState(todo?.title);
 
   const dispatch = useContext(DispatchContext);
+
   const onDelete = async () => {
     try {
       await deleteTodo(todo.id);
@@ -21,27 +22,32 @@ export const TodoItem: React.FC<Props> = ({ todo }) => {
     }
   };
 
-  const onBlur = async () => {
+  const onUpdateTitle = async () => {
     if (title.trim()) {
       try {
-        //const updatedTodo = await updateTodo(todo.id, title.trim(), todo.completed);
-        // dispatch({
-        //   type: ActionTypes.EDIT_TODO,
-        //   payload: { id: updatedTodo.id, title: updatedTodo.title },
-        // });
+        const updatedTodo = await updateTodo(todo.id, { title: title.trim() });
+        dispatch({ type: ActionTypes.EDIT_TODO, payload: updatedTodo });
       } catch (error) {
         console.error('Error updating todo:', error);
       }
     } else {
       onDelete();
     }
-
     setEditMode(false);
+  };
+
+  const onToggle = async () => {
+    try {
+      const updatedTodo = await updateTodo(todo.id, { completed: !todo.completed });
+      dispatch({ type: ActionTypes.TOGGLE_TODO, payload: updatedTodo });
+    } catch (error) {
+      console.error('Error toggling todo:', error);
+    }
   };
 
   const onSubmit = (event: React.KeyboardEvent) => {
     if (event.key === 'Enter') {
-      onBlur();
+      onUpdateTitle();
     } else if (event.key === 'Escape') {
       setTitle(todo.title);
       setEditMode(false);
@@ -60,9 +66,7 @@ export const TodoItem: React.FC<Props> = ({ todo }) => {
     <div data-cy="Todo" className={todo?.completed ? 'todo completed' : 'todo'}>
       <label className="todo__status-label">
         <input
-          onChange={() =>
-            dispatch({ type: ActionTypes.TOGGLE_TODO, payload: todo.id })
-          }
+          onChange={onToggle}
           data-cy="TodoStatus"
           type="checkbox"
           className="todo__status"
@@ -70,7 +74,7 @@ export const TodoItem: React.FC<Props> = ({ todo }) => {
         />
       </label>
       {editMode ? (
-        <form onKeyUp={onSubmit}>
+        <form>
           <input
             data-cy="TodoTitleField"
             type="text"
@@ -78,7 +82,8 @@ export const TodoItem: React.FC<Props> = ({ todo }) => {
             placeholder="Empty todo will be deleted"
             value={title}
             onChange={event => setTitle(event.target.value)}
-            onBlur={onBlur}
+            onBlur={onUpdateTitle}
+            onKeyDown={onSubmit}
             ref={renameField}
           />
         </form>

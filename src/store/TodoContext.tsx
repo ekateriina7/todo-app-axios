@@ -17,7 +17,6 @@ export const GlobalStateProvider: React.FC<Props> = ({ children }) => {
     const fetchTodos = async () => {
       try {
         const todos = await getAll();
-        console.log(todos)
         dispatch({ type: ActionTypes.SET_TODOS, payload: todos });
       } catch (error) {
         console.error('Error fetching todos:', error);

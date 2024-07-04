@@ -22,7 +22,7 @@ export async function deleteTodo(todoId: string): Promise<string> {
   return response.statusText;
 }
 
-export async function updateTodo(todoId: string, title: string, completed: boolean): Promise<Todo> {
-  const response = await axios.put(`/todos/${todoId}`, { title, completed });
+export async function updateTodo(todoId: string, updates: Partial<Todo>): Promise<Todo> {
+  const response = await axios.patch(`/todos/${todoId}`, updates);
   return response.data;
 }

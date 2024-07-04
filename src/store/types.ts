@@ -1,5 +1,5 @@
 export type Todo = {
-  id: number;
+  id: string;
   completed: boolean;
   title: string;
 };
@@ -28,9 +28,9 @@ export enum ActionTypes {
 
 export type Action =
   | { type: ActionTypes.ADD_TODO; payload: Todo }
-  | { type: ActionTypes.EDIT_TODO; payload: { id: number; title: string } }
-  | { type: ActionTypes.TOGGLE_TODO; payload: number }
-  | { type: ActionTypes.DELETE_TODO; payload: number }
+  | { type: ActionTypes.EDIT_TODO; payload: { id: string; title: string } }
+  | { type: ActionTypes.TOGGLE_TODO; payload: string }
+  | { type: ActionTypes.DELETE_TODO; payload: string }
   | { type: ActionTypes.SET_FILTER; payload: FilterFields }
   | { type: ActionTypes.CLEAR_COMPLETED }
   | { type: ActionTypes.TOGGLE_ALL_TODOS }
