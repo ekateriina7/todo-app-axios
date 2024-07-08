@@ -8,29 +8,45 @@ const {
   deleteAll
 } = require('../services/todo.service.js');
 
-const get = (req, res) => {
-  res.send(getAll());
+const get = async (req, res) => {
+  try {
+    const todos = await getAll();
+    res.send(todos);
+  } catch (error) {
+    console.error('Error fetching todos:', error);
+    res.sendStatus(500);
+  }
 };
 
-const getByIdController = (req, res) => {
-  const { id } = req.params;
-  const todo = getById(id);
-  if (!todo) {
-    res.sendStatus(404);
-    return;
+const getByIdController = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const todo = await getById(id);
+    if (!todo) {
+      res.sendStatus(404);
+      return;
+    }
+    res.send(todo);
+  } catch (error) {
+    console.error('Error fetching todo by id:', error);
+    res.sendStatus(500);
   }
-  res.send(todo);
 };
 
-const createController = (req, res) => {
-  const { title } = req.body;
-  if (!title) {
-    res.sendStatus(422);
-    return;
-  }
+const createController = async (req, res) => {
+  try {
+    const { title } = req.body;
+    if (!title) {
+      res.sendStatus(422);
+      return;
+    }
 
-  const todo = create(title);
-  res.status(201).send(todo);
+    const todo = await create(title);
+    res.status(201).send(todo);
+  } catch (error) {
+    console.error('Error creating todo:', error);
+    res.sendStatus(500);
+  }
 };
 
 const removeController = (req, res) => {
