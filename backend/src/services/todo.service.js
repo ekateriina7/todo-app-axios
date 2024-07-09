@@ -1,14 +1,12 @@
-const { DataTypes } = require('sequelize');
 const { v4: uuidv4 } = require('uuid');
+const { DataTypes, Op } = require('sequelize');
 const { sequelize } = require('./db');
 
 const Todo = sequelize.define(
   'Todo',
   {
-    // Model attributes are defined here
     id: {
       type: DataTypes.UUID,
-      defaultValue: DataTypes.UUIDV4,
       primaryKey: true,
     },
     title: {
@@ -51,47 +49,55 @@ const getById = async (id) => {
 };
 
 const create = (title) => {
-  return Todo.create({ title }).then(normalize);
+  const id = uuidv4();
+  return Todo.create({ id, title }).then(normalize);
 };
 
 const remove = async (id) => {
-  const result = await Todo.destroy({
-    where: { id },
+  await Todo.destroy({
+    where: { id }
   });
-  return result > 0;
+};
+
+const removeMany = async (ids) => {
+  await Todo.destroy({
+    where: {
+      id: {
+        [Op.in]: ids
+      }
+    }
+  });
 };
 
 const update = async ({ id, title, completed }) => {
-  const todo = await Todo.findByPk(id);
-  if (!todo) return null;
-
-  if (title !== undefined) {
-    todo.title = title;
-  }
-  if (completed !== undefined) {
-    todo.completed = completed;
-  }
-
-  await todo.save();
-  return normalize(todo);
-};
-
-const updateAll = async (todos) => {
-  const updatePromises = todos.map(({ id, title, completed }) =>
-    update({ id, title, completed }),
+  const [updated] = await Todo.update(
+    { title, completed },
+    { where: { id } }
   );
-  await Promise.all(updatePromises);
+
+  if (updated) {
+    const updatedTodo = await Todo.findByPk(id);
+    return normalize(updatedTodo);
+  }
+
+  return null;
 };
 
-const deleteAll = async (ids) => {
-  if (!ids.every(isUUID)) {
-    throw new Error('Invalid UUID');
-  }
-  const result = await Todo.destroy({
-    where: { id: ids },
+const updateMany = async (todos) => {
+  return await sequelize.transaction(async (t) => {
+    for (const { id, title, completed } of todos) {
+      await Todo.update(
+        { title, completed },
+        { where: { id }, transaction: t }
+      );
+    }
   });
-  return result > 0;
 };
+
+function isUUID(id) {
+  const pattern = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+  return pattern.test(id);
+}
 
 module.exports = {
   normalize,
@@ -99,12 +105,7 @@ module.exports = {
   getById,
   create,
   remove,
+  removeMany,
   update,
-  updateAll,
-  deleteAll,
+  updateMany,
 };
-
-function isUUID(id) {
-  const pattern = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
-  return pattern.test(id);
-}
