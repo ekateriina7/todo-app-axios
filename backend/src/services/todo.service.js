@@ -1,12 +1,6 @@
 const { v4: uuidv4 } = require('uuid');
 const pg = require('pg');
 
-let todos = [
-  { id: '1', title: 'first', completed: false },
-  { id: '2', title: 'second', completed: false },
-  { id: '3', title: 'third', completed: true },
-];
-
 const { Client } = pg;
 const client = new Client({
   host: 'localhost',
@@ -55,11 +49,27 @@ const remove = async (id) => {
   return success;
 };
 
-const update = async (id, updates) => {
-  const todo = todos.find(item => item.id === id);
+const update = async ({ id, title, completed }) => {
+  const todo = await getById(id);
   if (!todo) return null;
-  Object.assign(todo, updates);
-  return todo;
+
+  const fields = [];
+  if (title !== undefined) {
+    fields.push(`title = '${title}'`);
+  }
+  if (completed !== undefined) {
+    fields.push(`completed = ${completed}`);
+  }
+  if (fields.length === 0) return todo;
+
+  const query = `
+    UPDATE todos
+    SET ${fields.join(', ')}
+    WHERE id = '${id}'
+  `;
+
+  await client.query(query);
+  return await getById(id);
 };
 
 const updateAll = async (items) => {

@@ -49,42 +49,61 @@ const createController = async (req, res) => {
   }
 };
 
-const removeController = (req, res) => {
-  const { id } = req.params;
-  const success = remove(id);
-  if (!success) {
-    res.sendStatus(404);
-    return;
+const removeController = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const success = await remove(id);
+    if (!success) {
+      res.sendStatus(404);
+      return;
+    }
+    res.sendStatus(204);
+  } catch (error) {
+    console.error('Error removing todo:', error);
+    res.sendStatus(500);
   }
-  res.sendStatus(204);
+};
+const updateController = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { title, completed } = req.body;
+
+    const todo = await update({ id, title, completed });
+    if (!todo) {
+      res.sendStatus(404);
+      return;
+    }
+    res.send(todo);
+  } catch (error) {
+    console.error('Error updating todo:', error);
+    res.sendStatus(500);
+  }
 };
 
-const updateController = (req, res) => {
-  const { id } = req.params;
-  const updates = req.body;
-
-  const todo = update(id, updates);
-  if (!todo) {
-    res.sendStatus(404);
-    return;
+const updateMany = async (req, res) => {
+  try {
+    const { items } = req.body;
+    if (!Array.isArray(items)) {
+      res.sendStatus(422);
+      return;
+    }
+    await updateAll(items);
+    res.sendStatus(204);
+  } catch (error) {
+    console.error('Error updating todos:', error);
+    res.sendStatus(500);
   }
-  res.send(todo);
 };
 
-const updateMany = (req, res) => {
-  const { items } = req.body;
-  if (!Array.isArray(items)) {
-    res.sendStatus(422);
-    return;
+const deleteMany = async (req, res) => {
+  try {
+    const { items } = req.body;
+    await deleteAll(items);
+    res.sendStatus(204);
+  } catch (error) {
+    console.error('Error deleting todos:', error);
+    res.sendStatus(500);
   }
-  updateAll(items);
-  res.sendStatus(204);
-};
-
-const deleteMany = (req, res) => {
-  const { items } = req.body;
-  deleteAll(items);
-  res.sendStatus(204);
 };
 
 module.exports = {

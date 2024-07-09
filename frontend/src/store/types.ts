@@ -29,9 +29,9 @@ export enum ActionTypes {
 export type Action =
   | { type: ActionTypes.ADD_TODO; payload: Todo }
   | { type: ActionTypes.EDIT_TODO; payload: { id: string; title: string } }
-  | { type: ActionTypes.TOGGLE_TODO; payload: string }
+  | { type: ActionTypes.TOGGLE_TODO; payload: Todo }
   | { type: ActionTypes.DELETE_TODO; payload: string }
   | { type: ActionTypes.SET_FILTER; payload: FilterFields }
   | { type: ActionTypes.CLEAR_COMPLETED }
   | { type: ActionTypes.TOGGLE_ALL_TODOS }
-  | { type: ActionTypes.SET_TODOS; payload: Todo[] };;
+  | { type: ActionTypes.SET_TODOS; payload: Todo[] };
