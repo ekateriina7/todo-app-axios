@@ -1,17 +1,18 @@
 const {
+  normalize,
   getAll,
   getById,
   create,
   remove,
   update,
-  updateAll,
-  deleteAll
+  updateMany,
+  removeMany
 } = require('../services/todo.service.js');
 
 const get = async (req, res) => {
   try {
     const todos = await getAll();
-    res.send(todos);
+    res.send(todos.map(normalize));
   } catch (error) {
     console.error('Error fetching todos:', error);
     res.sendStatus(500);
@@ -26,7 +27,7 @@ const getByIdController = async (req, res) => {
       res.sendStatus(404);
       return;
     }
-    res.send(todo);
+    res.send(normalize(todo));
   } catch (error) {
     console.error('Error fetching todo by id:', error);
     res.sendStatus(500);
@@ -42,7 +43,7 @@ const createController = async (req, res) => {
     }
 
     const todo = await create(title);
-    res.status(201).send(todo);
+    res.status(201).send(normalize(todo));
   } catch (error) {
     console.error('Error creating todo:', error);
     res.sendStatus(500);
@@ -63,6 +64,7 @@ const removeController = async (req, res) => {
     res.sendStatus(500);
   }
 };
+
 const updateController = async (req, res) => {
   try {
     const { id } = req.params;
@@ -73,21 +75,21 @@ const updateController = async (req, res) => {
       res.sendStatus(404);
       return;
     }
-    res.send(todo);
+    res.send(normalize(todo));
   } catch (error) {
     console.error('Error updating todo:', error);
     res.sendStatus(500);
   }
 };
 
-const updateMany = async (req, res) => {
+const updateManyController = async (req, res) => {
   try {
     const { items } = req.body;
     if (!Array.isArray(items)) {
       res.sendStatus(422);
       return;
     }
-    await updateAll(items);
+    await updateMany(items);
     res.sendStatus(204);
   } catch (error) {
     console.error('Error updating todos:', error);
@@ -95,10 +97,10 @@ const updateMany = async (req, res) => {
   }
 };
 
-const deleteMany = async (req, res) => {
+const deleteManyController = async (req, res) => {
   try {
     const { items } = req.body;
-    await deleteAll(items);
+    await removeMany(items);
     res.sendStatus(204);
   } catch (error) {
     console.error('Error deleting todos:', error);
@@ -112,6 +114,6 @@ module.exports = {
   create: createController,
   remove: removeController,
   update: updateController,
-  updateMany,
-  deleteMany
+  updateMany: updateManyController,
+  deleteMany: deleteManyController
 };

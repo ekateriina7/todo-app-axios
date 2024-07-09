@@ -1,113 +1,110 @@
+const { DataTypes } = require('sequelize');
 const { v4: uuidv4 } = require('uuid');
-const pg = require('pg');
+const { sequelize } = require('./db');
 
-const { Client } = pg;
-const client = new Client({
-  host: 'localhost',
-  user: 'postgres',
-  password: '123123',
-  database: 'postgres',
-});
+const Todo = sequelize.define(
+  'Todo',
+  {
+    // Model attributes are defined here
+    id: {
+      type: DataTypes.UUID,
+      defaultValue: DataTypes.UUIDV4,
+      primaryKey: true,
+    },
+    title: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    completed: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+    },
+    createdAt: {
+      type: DataTypes.DATE,
+      allowNull: false,
+      field: 'created_at',
+      defaultValue: DataTypes.NOW,
+    },
+  },
+  {
+    tableName: 'todos',
+    updatedAt: false,
+    createdAt: false,
+  },
+);
 
-async function connectClient() {
-  await client.connect();
-}
-
-connectClient().catch(console.error);
-
+const normalize = ({ id, title, completed }) => {
+  return { id, title, completed };
+};
 
 const getAll = async () => {
-  const result = await client.query('SELECT * FROM todos');
-  console.log(result.rows)
-  return result.rows;
+  const result = await Todo.findAll({
+    order: [['createdAt', 'DESC']],
+  });
+  return result.map(normalize);
 };
 
 const getById = async (id) => {
-  const result = await client.query(`
-  SELECT * FROM todos
-  WHERE id = $1
-  `, [id]);
-  console.log(result.rows[0])
-  return result.rows[0];
+  const todo = await Todo.findByPk(id);
+  return normalize(todo);
 };
 
-const create = async (title) => {
-  const id = uuidv4()
-  await client.query(`
-  INSERT INTO todos (id, title)
-  VALUES ($1, $2)
-  `, [id, title]);
-  return getById(id);
+const create = (title) => {
+  return Todo.create({ title }).then(normalize);
 };
 
 const remove = async (id) => {
-  const result = await client.query(`
-    DELETE FROM todos
-    WHERE id = $1
-  `, [id]);
-
-  return result.rowCount > 0;
+  const result = await Todo.destroy({
+    where: { id },
+  });
+  return result > 0;
 };
 
 const update = async ({ id, title, completed }) => {
-  const todo = await getById(id);
+  const todo = await Todo.findByPk(id);
   if (!todo) return null;
 
-  const fields = [];
-  const values = [id];
-  let fieldIndex = 2;
-
   if (title !== undefined) {
-    fields.push(`title = $${fieldIndex++}`);
-    values.push(title);
+    todo.title = title;
   }
   if (completed !== undefined) {
-    fields.push(`completed = $${fieldIndex++}`);
-    values.push(completed);
+    todo.completed = completed;
   }
-  if (fields.length === 0) return todo;
 
-  const query = `
-    UPDATE todos
-    SET ${fields.join(', ')}
-    WHERE id = $1
-    RETURNING *
-  `;
-
-  const result = await client.query(query, values);
-  return result.rows[0];
+  await todo.save();
+  return normalize(todo);
 };
 
 const updateAll = async (todos) => {
-  for (const { id, title, completed } of todos) {
-    await update({ id, title, completed });
-  }
+  const updatePromises = todos.map(({ id, title, completed }) =>
+    update({ id, title, completed }),
+  );
+  await Promise.all(updatePromises);
 };
-
-function isUUID(id) {
-  const pattern = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
-  return pattern.test(id);
-}
 
 const deleteAll = async (ids) => {
   if (!ids.every(isUUID)) {
     throw new Error('Invalid UUID');
   }
-
-  const indexes = ids.map((_, i) => `$${i + 1}`).join(', ');
-  const query = `
-    DELETE FROM todos
-    WHERE id IN (${indexes})
-  `;
-  await client.query(query, ids);
+  const result = await Todo.destroy({
+    where: { id: ids },
+  });
+  return result > 0;
 };
 
 module.exports = {
+  normalize,
   getAll,
   getById,
   create,
   remove,
   update,
   updateAll,
-  deleteAll
+  deleteAll,
 };
+
+function isUUID(id) {
+  const pattern = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+  return pattern.test(id);
+}
